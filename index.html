@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipe Dream</title>
+  <meta name="description" content="A remake of the 1989 puzzle classic Pipe Dream with all 36 levels, playable in flat or 2.5D view.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316213e'/%3E%3Cpath d='M8 32h24v24' fill='none' stroke='%238b95a7' stroke-width='16'/%3E%3Cpath d='M8 32h24v24' fill='none' stroke='%2322c55e' stroke-width='7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="12" fill="#16213e"/>
+          <path d="M8 32h24v24" fill="none" stroke="#8b95a7" stroke-width="16"/>
+          <path d="M8 32h24v24" fill="none" stroke="#22c55e" stroke-width="7"/>
+        </svg>
+        <div>
+          <h1>Pipe Dream</h1>
+          <p class="tagline">Lay the pipe before the flooz arrives</p>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="seg" role="group" aria-label="View mode">
+          <button type="button" data-view="flat" class="active">Flat</button>
+          <button type="button" data-view="iso">2.5D</button>
+        </div>
+        <button type="button" class="icon-btn" id="btn-sound" title="Sound (M)" aria-label="Toggle sound">
+          <svg viewBox="0 0 24 24" class="ico-on"><path d="M4 9v6h4l5 4V5L8 9H4zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM13 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+          <svg viewBox="0 0 24 24" class="ico-off"><path d="M4 9v6h4l5 4V5L8 9H4zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="btn-help" title="How to play (H)" aria-label="How to play">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 16a1.3 1.3 0 1 1 0-2.6 1.3 1.3 0 0 1 0 2.6zm1.6-6.4c-.8.5-.9.8-.9 1.4v.5h-1.6v-.6c0-1.3.5-2 1.6-2.7.8-.5 1-.8 1-1.4 0-.8-.6-1.3-1.6-1.3-1 0-1.7.6-1.8 1.6H8.6c.1-2 1.5-3.3 3.6-3.3 2 0 3.4 1.2 3.4 2.9 0 1.2-.5 1.9-1.8 2.7z"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="btn-pause" title="Pause (P)" aria-label="Pause">
+          <svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zm6 0h4v14h-4z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="game">
+      <aside class="dispenser">
+        <div class="dispenser-label">Queue</div>
+        <canvas id="dispenser" width="96" height="400" aria-label="Upcoming pieces"></canvas>
+        <div class="dispenser-next">Next</div>
+      </aside>
+
+      <section class="stage">
+        <canvas id="board" width="760" height="480" aria-label="Game board"></canvas>
+        <div class="hud">
+          <div class="stat"><span class="k">Level</span><span class="v" id="hud-level">1</span></div>
+          <div class="stat"><span class="k">Score</span><span class="v" id="hud-score">0</span></div>
+          <div class="stat stat-distance"><span class="k">Distance</span><span class="v" id="hud-distance">12</span></div>
+          <div class="stat"><span class="k">Best</span><span class="v" id="hud-hiscore">0</span></div>
+          <div class="timer">
+            <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+            <button type="button" class="btn btn-accent" id="btn-flow" title="Start the flooz now and speed it up (Space)">Flow!</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>Click a cell to lay the next piece &middot; Arrows move &middot; Enter places &middot; Space speeds the flooz &middot; V toggles view</span>
+    </footer>
+  </div>
+
+  <!-- ===== modals ===== -->
+  <div class="modal-backdrop" id="modals" hidden>
+
+    <div class="modal" id="modal-title" hidden>
+      <div class="modal-hero">
+        <h2>Pipe Dream</h2>
+        <p>The 1989 classic, rebuilt for the browser. 36 levels. Two views.</p>
+      </div>
+      <div class="modal-body">
+        <p>Lay pipe from the start piece fast enough to keep ahead of the flooz. Reach the <strong>distance</strong> for each level before the flooz spills out of an open end.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-new">New Game</button>
+          <button type="button" class="btn" id="btn-password">Enter Password</button>
+          <button type="button" class="btn" id="btn-howto">How to Play</button>
+        </div>
+        <p class="muted small">Best score: <span id="title-hiscore">0</span></p>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-password" hidden>
+      <div class="modal-body">
+        <h3>Level Password</h3>
+        <p>Passwords are shown every four levels. Enter one to jump straight there.</p>
+        <form id="form-password" class="row">
+          <input type="text" id="input-password" maxlength="8" autocomplete="off" spellcheck="false" placeholder="e.g. HAHA">
+          <button type="submit" class="btn btn-primary">Go</button>
+        </form>
+        <p class="error" id="password-error" hidden>That password doesn't match any level.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn" data-close="title">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal modal-wide" id="modal-help" hidden>
+      <div class="modal-body">
+        <h3>How to Play</h3>
+        <div class="help-grid">
+          <div>
+            <h4>The goal</h4>
+            <p>The flooz leaves the <strong class="amber">start piece</strong> when the timer runs out. Keep laying pipe ahead of it. Each level sets a <strong>distance</strong>: the number of pipe sections the flooz must pass through. Reach it and you clear the level; spill before then and it's game over.</p>
+            <h4>Laying pipe</h4>
+            <p>The next piece is at the bottom of the queue. Click any empty cell to place it. You can also drop a piece on top of one already on the board (as long as the flooz hasn't reached it) – it costs <strong>50 points</strong> and a moment's delay.</p>
+            <h4>Speeding up</h4>
+            <p>Confident in your route? Press <kbd>Space</kbd> or the <em>Flow!</em> button to skip the countdown and make the flooz race. It stays fast for the rest of the level.</p>
+          </div>
+          <div>
+            <h4>Scoring</h4>
+            <ul>
+              <li><strong>+50</strong> for every section the flooz fills</li>
+              <li><strong>+500</strong> for passing through both channels of a cross</li>
+              <li><strong>+1000</strong> for reaching the <strong class="teal">end piece</strong></li>
+              <li><strong>&minus;50</strong> for replacing a piece</li>
+              <li><strong>&minus;100</strong> for each unused piece left on the board</li>
+            </ul>
+            <h4>Special pieces</h4>
+            <ul>
+              <li><strong>Walls</strong> – nothing can be built there.</li>
+              <li><strong>Reservoirs</strong> – fixed straights with a tank; take three times longer to fill. Handy for buying time.</li>
+              <li><strong>One-way pipes</strong> – fixed straights with red arrows. Enter against the arrow and the flooz spills.</li>
+              <li><strong>End piece</strong> – the flooz must enter through its opening. Reaching it ends the level with a bonus (you still need the distance).</li>
+            </ul>
+            <h4>Keys</h4>
+            <p><kbd>&larr;&uarr;&rarr;&darr;</kbd> move &middot; <kbd>Enter</kbd> place &middot; <kbd>Space</kbd> flow &middot; <kbd>P</kbd> pause &middot; <kbd>V</kbd> view &middot; <kbd>M</kbd> sound</p>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" data-close="auto">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-level" hidden>
+      <div class="modal-hero hero-success">
+        <h2>Level Complete</h2>
+        <p id="level-subtitle"></p>
+      </div>
+      <div class="modal-body">
+        <dl class="stats">
+          <dt>Pieces filled</dt><dd id="lc-filled"></dd>
+          <dt>End bonus</dt><dd id="lc-bonus"></dd>
+          <dt>Unused pieces</dt><dd id="lc-penalty"></dd>
+          <dt>Score</dt><dd id="lc-score"></dd>
+        </dl>
+        <p class="password-note" id="lc-password" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-next">Next Level</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-over" hidden>
+      <div class="modal-hero hero-danger">
+        <h2>Flooz Everywhere</h2>
+        <p id="over-subtitle"></p>
+      </div>
+      <div class="modal-body">
+        <dl class="stats">
+          <dt>Pieces filled</dt><dd id="go-filled"></dd>
+          <dt>Needed</dt><dd id="go-needed"></dd>
+          <dt>Score</dt><dd id="go-score"></dd>
+          <dt>Best</dt><dd id="go-hiscore"></dd>
+        </dl>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-retry">Retry Level</button>
+          <button type="button" class="btn" id="btn-over-new">New Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-won" hidden>
+      <div class="modal-hero hero-success">
+        <h2>All 36 Levels Cleared</h2>
+        <p>The flooz never stood a chance.</p>
+      </div>
+      <div class="modal-body">
+        <dl class="stats">
+          <dt>Final score</dt><dd id="won-score"></dd>
+          <dt>Best</dt><dd id="won-hiscore"></dd>
+        </dl>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-won-new">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-pause" hidden>
+      <div class="modal-body">
+        <h3>Paused</h3>
+        <p class="muted">The flooz is holding its breath.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-resume">Resume</button>
+          <button type="button" class="btn" id="btn-quit">Quit to Title</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="js/levels.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/render-common.js"></script>
+  <script src="js/render-flat.js"></script>
+  <script src="js/render-iso.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
