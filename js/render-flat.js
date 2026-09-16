@@ -101,6 +101,7 @@
       const { c, r, ok } = t;
       const x = OX + c * CELL;
       const y = OY + r * CELL;
+      const col = ok ? (t.empty ? C.cursor : C.cursorReplace) : C.cursorBad;
       if (t.column) {
         // bonus round: light up the whole column the piece will drop into
         ctx.save();
@@ -116,18 +117,18 @@
         ctx.fill();
         ctx.restore();
       }
-      if (ok) {
-        // ghost of the next piece
+      if (ok && t.empty) {
+        // ghost of the next piece, only where nothing is in the way
         ctx.save();
-        ctx.globalAlpha = 0.38;
+        ctx.globalAlpha = 0.35;
         const [cx, cy] = this.center(c, r);
         this.drawCell(ctx, { type: 'pipe', kind: game.queue[0], fill: null }, cx, cy, CELL);
         ctx.restore();
       }
       ctx.save();
-      ctx.strokeStyle = ok ? C.cursor : C.cursorBad;
+      ctx.strokeStyle = col;
       ctx.lineWidth = 3;
-      ctx.shadowColor = ok ? C.cursor : C.cursorBad;
+      ctx.shadowColor = col;
       ctx.shadowBlur = 10;
       PD.roundRect(ctx, x + 3, y + 3, CELL - 6, CELL - 6, 6);
       ctx.stroke();

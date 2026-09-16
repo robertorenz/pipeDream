@@ -32,6 +32,7 @@
     arrow: '#e94560',
     cursor: '#06B6D4',
     cursorBad: '#DC2626',
+    cursorReplace: '#fbbf24',
     text: '#e0e0e0',
     popNeg: '#f87171',
     popBig: '#fbbf24',
@@ -143,9 +144,11 @@
     const { c, r } = game.cursor;
     if (game.bonus) {
       const lr = game.landingRow(c);
-      return { c, r: lr < 0 ? 0 : lr, ok: lr >= 0, column: true };
+      return { c, r: lr < 0 ? 0 : lr, ok: lr >= 0, empty: lr >= 0, column: true };
     }
-    return { c, r, ok: game.canPlaceAt(c, r), column: false };
+    // `empty` decides whether a ghost of the next piece is previewed: on a cell
+    // that already holds a pipe the cursor just turns amber (a replacement).
+    return { c, r, ok: game.canPlaceAt(c, r), empty: game.board[r][c].type === 'empty', column: false };
   };
 
   /** Vertical offset (px) for a piece still dropping into place in a bonus round. */

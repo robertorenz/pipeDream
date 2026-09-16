@@ -26,8 +26,11 @@ game over.
 | `M` | Toggle sound |
 | `H` | How to play |
 
-You can drop a piece on top of one already on the board as long as the flooz
-hasn't reached it. It costs 50 points, and — as in the original — the old piece
+Hovering an empty cell previews the next piece in place; the cursor is cyan.
+Over a cell that already holds a pipe the cursor turns amber instead — no
+preview is drawn there, so what you see is what's on the board — and clicking
+replaces it. You can drop a piece on top of one already on the board as long as
+the flooz hasn't reached it. It costs 50 points, and — as in the original — the old piece
 cracks, shakes and dissolves for about half a second before the new one drops
 in; nothing can be placed in the meantime. Every laid piece — replacement or
 not — drops onto the board from above over about two thirds of a second and

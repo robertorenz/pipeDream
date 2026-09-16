@@ -92,9 +92,9 @@
           const [px, py] = this.centerPt(c, r);
           PD.drawAnimated(ctx, game.board[r][c], px, py, (cl) => this.drawCell(ctx, cl, c, r));
           if (dy) ctx.translate(0, -dy);
-          if (cur && cur.ok && c === cur.c && r === cur.r) {
+          if (cur && cur.ok && cur.empty && c === cur.c && r === cur.r) {
             ctx.save();
-            ctx.globalAlpha = 0.4;
+            ctx.globalAlpha = 0.35;
             this.drawCell(ctx, { type: 'pipe', kind: game.queue[0], fill: null }, c, r);
             ctx.restore();
           }
@@ -150,7 +150,7 @@
       const { c, r, ok } = t;
       const x = this.ox + c * CW;
       const y = this.oy + r * CH;
-      const col = ok ? C.cursor : C.cursorBad;
+      const col = ok ? (t.empty ? C.cursor : C.cursorReplace) : C.cursorBad;
       ctx.save();
       if (t.column) {
         ctx.fillStyle = col;
