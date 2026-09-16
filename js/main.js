@@ -162,7 +162,7 @@
       audio.replace();
       dispAnim = 1;
     })
-    .on('settle', () => audio.place())
+    .on('settle', () => audio.land())
     .on('deny', () => audio.deny())
     .on('flowstart', () => audio.flowStart())
     .on('fast', () => audio.fast())

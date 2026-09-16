@@ -68,6 +68,10 @@
     place() {
       this.tone(520, 0.06, 'square', 0.25, 380);
     }
+    land() {
+      this.tone(190, 0.09, 'triangle', 0.35, 110);
+      this.noise(0.05, 0.15);
+    }
     replace() {
       this.noise(0.14, 0.35);
       this.tone(160, 0.12, 'sawtooth', 0.2, 90);

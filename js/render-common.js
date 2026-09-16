@@ -193,24 +193,51 @@
       ctx.restore();
       return;
     }
-    // the new piece drops onto the board from above
+    // the new piece drops onto the board from above, squashes on impact
     const k = Math.min(1, (a.t - a.breakMs) / a.popMs);
-    const ease = 1 - Math.pow(1 - k, 3);
-    const scale = 1.9 - 0.9 * ease;
+    const LAND = 0.7;
+    let scale;
+    let lift;
+    let alpha;
+    if (k < LAND) {
+      const e = 1 - Math.pow(1 - k / LAND, 3);
+      scale = 1.9 - 0.9 * e;
+      lift = (1 - e) * 46;
+      alpha = 0.15 + 0.85 * e;
+    } else {
+      const bounce = (k - LAND) / (1 - LAND);
+      scale = 1 - 0.12 * Math.sin(bounce * Math.PI);
+      lift = 0;
+      alpha = 1;
+    }
+    // shadow on the board, growing as the piece comes down
+    const sh = k < LAND ? k / LAND : 1;
     ctx.save();
-    ctx.globalAlpha = 0.4 * ease;
+    ctx.globalAlpha = 0.45 * sh;
     ctx.fillStyle = '#000';
     ctx.beginPath();
-    ctx.ellipse(cx + 3, cy + 8, 30 * (0.4 + 0.6 * ease), 20 * (0.4 + 0.6 * ease), 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + 3, cy + 8, 30 * (0.35 + 0.65 * sh), 20 * (0.35 + 0.65 * sh), 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
     ctx.save();
-    ctx.globalAlpha = 0.1 + 0.9 * ease;
-    ctx.translate(cx, cy - (1 - ease) * 40);
+    ctx.globalAlpha = alpha;
+    ctx.translate(cx, cy - lift);
     ctx.scale(scale, scale);
     ctx.translate(-cx, -cy);
     draw(cell);
     ctx.restore();
+    // impact ring
+    if (k >= LAND) {
+      const b = (k - LAND) / (1 - LAND);
+      ctx.save();
+      ctx.globalAlpha = 0.7 * (1 - b);
+      ctx.strokeStyle = PD.COLORS.cursor;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 12 + b * 30, (12 + b * 30) * 0.8, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
   };
 
   /** The flooz path through a non-cross pipe, as a list of "from"/"center"/"to" sides. */
