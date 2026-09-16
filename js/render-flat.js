@@ -117,10 +117,11 @@
         ctx.fill();
         ctx.restore();
       }
-      if (ok && t.empty) {
-        // ghost of the next piece, only where nothing is in the way
+      if (ok && PD.ghostVisible(game, t)) {
+        // cyan ghost of the next piece; blinks when previewing a replacement
         ctx.save();
-        ctx.globalAlpha = 0.35;
+        ctx.globalAlpha = PD.ghostAlpha(t);
+        ctx.filter = PD.GHOST_FILTER;
         const [cx, cy] = this.center(c, r);
         this.drawCell(ctx, { type: 'pipe', kind: game.queue[0], fill: null }, cx, cy, CELL);
         ctx.restore();

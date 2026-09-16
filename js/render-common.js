@@ -151,6 +151,16 @@
     return { c, r, ok: game.canPlaceAt(c, r), empty: game.board[r][c].type === 'empty', column: false };
   };
 
+  // The preview of the next piece is tinted cyan so it can't be mistaken for a
+  // real pipe, and over a cell that already holds a pipe it blinks.
+  PD.GHOST_FILTER = 'sepia(1) saturate(6) hue-rotate(140deg) brightness(1.2)';
+  PD.ghostVisible = function (game, t) {
+    return t.empty || Math.floor(game.now / 300) % 2 === 0;
+  };
+  PD.ghostAlpha = function (t) {
+    return t.empty ? 0.42 : 0.62;
+  };
+
   /** Vertical offset (px) for a piece still dropping into place in a bonus round. */
   PD.landingOffset = function (game, c, r, cellH) {
     const l = game.landingAt ? game.landingAt(c, r) : null;

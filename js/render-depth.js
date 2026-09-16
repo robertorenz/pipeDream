@@ -92,9 +92,10 @@
           const [px, py] = this.centerPt(c, r);
           PD.drawAnimated(ctx, game.board[r][c], px, py, (cl) => this.drawCell(ctx, cl, c, r));
           if (dy) ctx.translate(0, -dy);
-          if (cur && cur.ok && cur.empty && c === cur.c && r === cur.r) {
+          if (cur && cur.ok && c === cur.c && r === cur.r && PD.ghostVisible(game, cur)) {
             ctx.save();
-            ctx.globalAlpha = 0.35;
+            ctx.globalAlpha = PD.ghostAlpha(cur);
+            ctx.filter = PD.GHOST_FILTER;
             this.drawCell(ctx, { type: 'pipe', kind: game.queue[0], fill: null }, c, r);
             ctx.restore();
           }

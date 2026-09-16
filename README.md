@@ -26,10 +26,10 @@ game over.
 | `M` | Toggle sound |
 | `H` | How to play |
 
-Hovering an empty cell previews the next piece in place; the cursor is cyan.
-Over a cell that already holds a pipe the cursor turns amber instead — no
-preview is drawn there, so what you see is what's on the board — and clicking
-replaces it. You can drop a piece on top of one already on the board as long as
+Hovering an empty cell previews the next piece in place as a cyan ghost; the
+cursor is cyan. Over a cell that already holds a pipe the cursor turns amber
+and the ghost blinks on and off, so you can see both what's there and what
+would replace it. You can drop a piece on top of one already on the board as long as
 the flooz hasn't reached it. It costs 50 points, and — as in the original — the old piece
 cracks, shakes and dissolves for about half a second before the new one drops
 in; nothing can be placed in the meantime. Every laid piece — replacement or
