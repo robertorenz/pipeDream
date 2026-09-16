@@ -6,7 +6,10 @@ the classic **flat** top-down look and a **2.5D** view — the same top-down gri
 with the camera tilted slightly forward, so pipes are shaded cylinders with end
 caps and drop shadows, and walls and boxes show their front faces.
 
-No build step, no dependencies — open `index.html` in a browser and play.
+No build step, no dependencies — open `index.html` in a browser and play. The
+layout fills whatever window it gets: the board scales to the available space
+(rendered at native resolution so it stays sharp on large or high-DPI screens),
+the queue scales with it, and on narrow screens the queue moves below the board.
 
 ## Playing
 

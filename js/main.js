@@ -17,6 +17,70 @@
   };
   let renderer = renderers[localStorage.getItem('pd.view')] || renderers.flat;
 
+  /* ---------- fit to the viewport ---------- */
+
+  const gameEl = $('.game');
+  const stageEl = $('.stage');
+  const hudEl = $('.hud');
+  const dispEl = $('.dispenser');
+  const narrow = window.matchMedia('(max-width: 720px)');
+  let dispScale = 1; // CSS scale of the queue canvas relative to its 96x400 design
+
+  const px = (v) => parseFloat(v) || 0;
+
+  // Size the board to the largest 760x480 box that fits next to the queue,
+  // render it at native resolution so it stays sharp, and shrink the stage to
+  // the board so the queue sits right beside it. Everything is measured from
+  // the fixed-size containers, so resizing never feeds back into itself.
+  function fitLayout() {
+    const horizontal = narrow.matches;
+    const cs = getComputedStyle(stageEl);
+    const padX = px(cs.paddingLeft) + px(cs.paddingRight);
+    const padY = px(cs.paddingTop) + px(cs.paddingBottom);
+    const stageGap = px(cs.rowGap);
+    const gameGap = px(getComputedStyle(gameEl).columnGap);
+    const gameW = gameEl.clientWidth;
+    const gameH = gameEl.clientHeight;
+    if (!gameW || !gameH) return;
+
+    let availW;
+    let availH;
+    if (horizontal) {
+      dispScale = Math.min(1, Math.max(0.6, (gameW - 32) / 400));
+      dispCanvas.style.width = `${Math.round(400 * dispScale)}px`;
+      dispCanvas.style.height = `${Math.round(96 * dispScale)}px`;
+      availW = gameW - padX;
+      availH = gameH - dispEl.offsetHeight - gameGap - padY - hudEl.offsetHeight - stageGap;
+      stageEl.style.maxWidth = '';
+    } else {
+      availH = gameH - padY - hudEl.offsetHeight - stageGap;
+      dispScale = Math.min(2.2, Math.max(0.7, availH / PD.CANVAS_H));
+      dispCanvas.style.width = `${Math.round(96 * dispScale)}px`;
+      dispCanvas.style.height = `${Math.round(400 * dispScale)}px`;
+      availW = gameW - dispEl.offsetWidth - gameGap - padX;
+    }
+    const k = Math.max(0.25, Math.min(availW / PD.CANVAS_W, availH / PD.CANVAS_H));
+    const cssW = Math.floor(PD.CANVAS_W * k);
+    const cssH = Math.floor(PD.CANVAS_H * k);
+    boardCanvas.style.width = `${cssW}px`;
+    boardCanvas.style.height = `${cssH}px`;
+    if (!horizontal) stageEl.style.maxWidth = `${cssW + padX}px`;
+
+    const res = Math.min(3, k * (window.devicePixelRatio || 1));
+    const w = Math.round(PD.CANVAS_W * res);
+    const h = Math.round(PD.CANVAS_H * res);
+    if (boardCanvas.width !== w || boardCanvas.height !== h) {
+      boardCanvas.width = w;
+      boardCanvas.height = h;
+    }
+  }
+  if (window.ResizeObserver) new ResizeObserver(() => fitLayout()).observe(gameEl);
+  window.addEventListener('resize', fitLayout);
+  narrow.addEventListener('change', fitLayout);
+  fitLayout();
+  requestAnimationFrame(fitLayout);
+  PD.fitLayout = fitLayout;
+
   /* ---------- view mode ---------- */
 
   function setView(name) {
@@ -270,9 +334,10 @@
 
   /* ---------- input ---------- */
 
+  // Pointer position in the renderers' 760x480 logical coordinates.
   function canvasPoint(e) {
     const rect = boardCanvas.getBoundingClientRect();
-    return [((e.clientX - rect.left) * boardCanvas.width) / rect.width, ((e.clientY - rect.top) * boardCanvas.height) / rect.height];
+    return [((e.clientX - rect.left) * PD.CANVAS_W) / rect.width, ((e.clientY - rect.top) * PD.CANVAS_H) / rect.height];
   }
 
   boardCanvas.addEventListener('mousemove', (e) => {
@@ -359,18 +424,21 @@
 
   /* ---------- dispenser ---------- */
 
-  const narrow = window.matchMedia('(max-width: 720px)');
-
   function drawDispenser(dt) {
     const horizontal = narrow.matches;
     const wantW = horizontal ? 400 : 96;
     const wantH = horizontal ? 96 : 400;
-    if (dispCanvas.width !== wantW || dispCanvas.height !== wantH) {
-      dispCanvas.width = wantW;
-      dispCanvas.height = wantH;
+    // draw in the 96x400 (or 400x96) design space at native resolution
+    const res = dispScale * (window.devicePixelRatio || 1);
+    const pw = Math.round(wantW * res);
+    const ph = Math.round(wantH * res);
+    if (dispCanvas.width !== pw || dispCanvas.height !== ph) {
+      dispCanvas.width = pw;
+      dispCanvas.height = ph;
     }
     if (dispAnim > 0) dispAnim = Math.max(0, dispAnim - dt / 140);
     const ctx = dispCtx;
+    ctx.setTransform(res, 0, 0, res, 0, 0);
     ctx.fillStyle = PD.COLORS.bg;
     ctx.fillRect(0, 0, wantW, wantH);
     if (!game.queue.length) return;

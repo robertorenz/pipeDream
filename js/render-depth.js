@@ -71,6 +71,7 @@
 
     draw(game) {
       const ctx = this.ctx;
+      ctx.setTransform(this.canvas.width / W, 0, 0, this.canvas.height / H, 0, 0);
       ctx.fillStyle = C.bg;
       ctx.fillRect(0, 0, W, H);
 
