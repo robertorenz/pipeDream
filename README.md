@@ -27,8 +27,10 @@ game over.
 | `H` | How to play |
 
 You can drop a piece on top of one already on the board as long as the flooz
-hasn't reached it. It costs 50 points and a moment's delay, exactly like the
-original.
+hasn't reached it. It costs 50 points, and — as in the original — the old piece
+breaks up for about half a second before the new one lands; nothing can be
+placed in the meantime. Freshly laid pieces pop into place rather than
+appearing instantly.
 
 ### Scoring
 

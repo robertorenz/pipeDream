@@ -63,8 +63,9 @@
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c < COLS; c++) {
           const cell = game.board[r][c];
-          const [cx, cy] = this.center(c, r);
-          this.drawCell(ctx, cell, cx, cy + PD.landingOffset(game, c, r, CELL), CELL);
+          const [cx, cy0] = this.center(c, r);
+          const cy = cy0 + PD.landingOffset(game, c, r, CELL);
+          PD.drawAnimated(ctx, cell, cx, cy, (cl) => this.drawCell(ctx, cl, cx, cy, CELL));
         }
       ctx.restore();
 

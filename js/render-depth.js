@@ -89,7 +89,8 @@
         for (let c = 0; c < COLS; c++) {
           const dy = PD.landingOffset(game, c, r, CH);
           if (dy) ctx.translate(0, dy);
-          this.drawCell(ctx, game.board[r][c], c, r);
+          const [px, py] = this.centerPt(c, r);
+          PD.drawAnimated(ctx, game.board[r][c], px, py, (cl) => this.drawCell(ctx, cl, c, r));
           if (dy) ctx.translate(0, -dy);
           if (cur && cur.ok && c === cur.c && r === cur.r) {
             ctx.save();

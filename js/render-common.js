@@ -156,6 +156,36 @@
     return -(1 - k * k) * l.rows * cellH;
   };
 
+  /**
+   * Draw a cell through its placement animation: a replaced piece shakes and
+   * fades out first, then the new piece pops in. `draw(cell)` renders a cell
+   * normally; (cx, cy) is the on-screen centre used for the pop scaling.
+   */
+  PD.drawAnimated = function (ctx, cell, cx, cy, draw) {
+    const a = cell.anim;
+    if (!a || cell.fill) return draw(cell);
+    if (a.kind === 'replace' && a.t < a.breakMs) {
+      const k = a.t / a.breakMs;
+      const shake = (1 - k) * 3;
+      ctx.save();
+      ctx.globalAlpha = 1 - k * 0.85;
+      ctx.translate(Math.sin(a.t * 0.11) * shake, Math.cos(a.t * 0.17) * shake);
+      draw(a.old);
+      ctx.restore();
+      return;
+    }
+    const k = Math.min(1, (a.t - a.breakMs) / a.popMs);
+    const ease = 1 - Math.pow(1 - k, 3);
+    const scale = 1.4 - 0.4 * ease;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, 0.2 + k * 1.2);
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+    draw(cell);
+    ctx.restore();
+  };
+
   /** The flooz path through a non-cross pipe, as a list of "from"/"center"/"to" sides. */
   PD.floozRoute = function (cell, chan) {
     if (!cell.fill) return null;

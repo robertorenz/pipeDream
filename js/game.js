@@ -41,7 +41,8 @@
 
   const FAST_MS = 170;         // flow time per piece once the player speeds up
   const RESERVOIR_FACTOR = 3;  // reservoirs take this many times longer to fill
-  const REPLACE_LOCK_MS = 350; // no placing while a replaced piece "breaks"
+  const REPLACE_LOCK_MS = 450; // the old piece breaks up for this long before the new one lands
+  const PLACE_POP_MS = 150;    // a newly laid piece pops into place over this long
   const SPILL_PAUSE_MS = 900;  // pause after the spill before the cleanup starts
   const CLEANUP_STEP_MS = 90;  // interval between unused pieces being removed
 
@@ -246,8 +247,11 @@
       const kind = this.queue.shift();
       this.queue.push(randomPiece());
       const replacing = cell.type === 'pipe';
-      this.board[r][c] = makeCell('pipe', { kind });
+      const fresh = makeCell('pipe', { kind });
+      this.board[r][c] = fresh;
       if (this.bonus) this.landings.push({ c, r, t: 0, life: LAND_MS, rows: r + 1 });
+      else if (replacing) fresh.anim = { kind: 'replace', old: cell, t: 0, breakMs: REPLACE_LOCK_MS, popMs: PLACE_POP_MS };
+      else fresh.anim = { kind: 'place', t: 0, breakMs: 0, popMs: PLACE_POP_MS };
       if (replacing) {
         this.addScore(SCORE.REPLACE, c, r);
         this.lockUntil = this.now + REPLACE_LOCK_MS;
@@ -308,6 +312,7 @@
       this.effects = this.effects.filter((fx) => fx.t < fx.life);
       for (const l of this.landings) l.t += dt;
       this.landings = this.landings.filter((l) => l.t < l.life);
+      this.tickPlaceAnims(dt);
       if (this.spill) this.spill.t += dt;
 
       switch (this.phase) {
@@ -327,6 +332,19 @@
         default:
           break;
       }
+    }
+
+    // Advance the break/pop animations on freshly laid pieces.
+    tickPlaceAnims(dt) {
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++) {
+          const a = this.board[r][c].anim;
+          if (!a) continue;
+          const before = a.t;
+          a.t += dt;
+          if (a.kind === 'replace' && before < a.breakMs && a.t >= a.breakMs) this.emit('settle', { c, r });
+          if (a.t >= a.breakMs + a.popMs) delete this.board[r][c].anim;
+        }
     }
 
     startFlow() {
