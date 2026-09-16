@@ -1,8 +1,10 @@
 # Pipe Dream
 
 A browser remake of the 1989 puzzle classic *Pipe Dream* (a.k.a. *Pipe Mania*),
-with all 36 levels and two switchable views: the classic **flat** top-down look
-and a **2.5D** isometric rendering with shaded tubes and extruded walls.
+with all 36 levels, the falling-piece bonus rounds, and two switchable views:
+the classic **flat** top-down look and a **2.5D** view — the same top-down grid
+with the camera tilted slightly forward, so pipes are shaded cylinders with end
+caps and drop shadows, and walls and boxes show their front faces.
 
 No build step, no dependencies — open `index.html` in a browser and play.
 
@@ -37,6 +39,7 @@ original.
 | Flooz reaches the end piece | +1000 |
 | Replacing a piece | −50 |
 | Each unused piece removed at the end of a level | −100 |
+| Each section filled during a bonus round | +100 |
 
 The score never drops below zero. Your best score is kept in `localStorage`.
 
@@ -51,6 +54,15 @@ The score never drops below zero. Your best score is kept in `localStorage`.
   the level with a bonus, but you still need to have covered the distance.
 - **Pre-placed pipes** — ordinary pipes already on the board; replaceable
   without penalty.
+
+### Bonus rounds
+
+After every fourth level (4, 8, 12, …) the original's bonus round plays: an
+empty board with the start piece at the bottom pointing up. Pieces fall from
+the top — pick a column and the piece drops in and stacks on whatever is
+below, Tetris-style. There is no distance to reach: every section the flooz
+fills is worth 100 points and leftover pieces cost nothing. `← →` choose the
+column, `↓` / `Enter` / click drops the piece.
 
 ### Levels and passwords
 
@@ -85,12 +97,13 @@ js/levels.js         the 36 level maps and timings
 js/game.js           rules engine: flow simulation, scoring, placement, cleanup
 js/render-common.js  palette and drawing helpers shared by both renderers
 js/render-flat.js    classic top-down renderer
-js/render-iso.js     2.5D isometric renderer
+js/render-depth.js   2.5D renderer (tilted top-down with height)
 js/audio.js          WebAudio synthesised sound effects
 js/main.js           input, HUD, modals, dispenser and the main loop
 ```
 
-The engine (`PD.Game`) is renderer-agnostic. A renderer implements
+The engine (`PD.Game`) is renderer-agnostic and also runs the bonus rounds
+(`loadBonus`, `landingRow`). A renderer implements
 `draw(game)`, `hitTest(x, y)` and `drawPieceIcon(ctx, kind, x, y, size)`, so a
 third look can be dropped in without touching the rules.
 

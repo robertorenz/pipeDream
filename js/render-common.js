@@ -134,6 +134,28 @@
     ctx.closePath();
   };
 
+  /**
+   * Where the cursor would put the next piece: the hovered cell normally, or
+   * the landing cell of the hovered column during a bonus round.
+   */
+  PD.cursorTarget = function (game) {
+    if (game.phase !== 'countdown' && game.phase !== 'flowing') return null;
+    const { c, r } = game.cursor;
+    if (game.bonus) {
+      const lr = game.landingRow(c);
+      return { c, r: lr < 0 ? 0 : lr, ok: lr >= 0, column: true };
+    }
+    return { c, r, ok: game.canPlaceAt(c, r), column: false };
+  };
+
+  /** Vertical offset (px) for a piece still dropping into place in a bonus round. */
+  PD.landingOffset = function (game, c, r, cellH) {
+    const l = game.landingAt ? game.landingAt(c, r) : null;
+    if (!l) return 0;
+    const k = l.t / l.life;
+    return -(1 - k * k) * l.rows * cellH;
+  };
+
   /** The flooz path through a non-cross pipe, as a list of "from"/"center"/"to" sides. */
   PD.floozRoute = function (cell, chan) {
     if (!cell.fill) return null;

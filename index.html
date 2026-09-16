@@ -25,7 +25,7 @@
       <div class="controls">
         <div class="seg" role="group" aria-label="View mode">
           <button type="button" data-view="flat" class="active">Flat</button>
-          <button type="button" data-view="iso">2.5D</button>
+          <button type="button" data-view="depth">2.5D</button>
         </div>
         <button type="button" class="icon-btn" id="btn-sound" title="Sound (M)" aria-label="Toggle sound">
           <svg viewBox="0 0 24 24" class="ico-on"><path d="M4 9v6h4l5 4V5L8 9H4zm11.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM13 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
@@ -112,6 +112,8 @@
             <p>The next piece is at the bottom of the queue. Click any empty cell to place it. You can also drop a piece on top of one already on the board (as long as the flooz hasn't reached it) – it costs <strong>50 points</strong> and a moment's delay.</p>
             <h4>Speeding up</h4>
             <p>Confident in your route? Press <kbd>Space</kbd> or the <em>Flow!</em> button to skip the countdown and make the flooz race. It stays fast for the rest of the level.</p>
+            <h4>Bonus rounds</h4>
+            <p>After every fourth level the pieces fall from the top instead: pick a column and the piece drops in and stacks. The start sits at the bottom pointing up. No distance to reach – every section filled is worth 100 points and leftovers cost nothing.</p>
           </div>
           <div>
             <h4>Scoring</h4>
@@ -154,6 +156,37 @@
         <p class="password-note" id="lc-password" hidden></p>
         <div class="modal-actions">
           <button type="button" class="btn btn-primary" id="btn-next">Next Level</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-bonus" hidden>
+      <div class="modal-hero hero-bonus">
+        <h2>Bonus Round</h2>
+        <p>Pieces fall from the top. Build up from the start.</p>
+      </div>
+      <div class="modal-body">
+        <p>Pick a column and the next piece drops in and stacks up like a tower. The <strong class="amber">start piece</strong> sits at the bottom pointing up, so build a route that climbs. There's no distance to reach – every section the flooz fills is worth <strong>100 points</strong>, and nothing is deducted for leftovers.</p>
+        <p class="muted small"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> choose a column &middot; <kbd>&darr;</kbd> / <kbd>Enter</kbd> / click to drop</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-bonus-start">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-bonus-over" hidden>
+      <div class="modal-hero hero-bonus">
+        <h2>Bonus Round Over</h2>
+        <p>The flooz has run its course.</p>
+      </div>
+      <div class="modal-body">
+        <dl class="stats">
+          <dt>Sections filled</dt><dd id="bonus-filled"></dd>
+          <dt>Bonus points</dt><dd id="bonus-points"></dd>
+          <dt>Score</dt><dd id="bonus-score"></dd>
+        </dl>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="btn-bonus-continue">Continue</button>
         </div>
       </div>
     </div>
@@ -210,7 +243,7 @@
   <script src="js/game.js"></script>
   <script src="js/render-common.js"></script>
   <script src="js/render-flat.js"></script>
-  <script src="js/render-iso.js"></script>
+  <script src="js/render-depth.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/main.js"></script>
 </body>

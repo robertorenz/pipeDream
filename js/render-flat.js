@@ -56,12 +56,17 @@
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c < COLS; c++) this.drawTile(ctx, c, r);
 
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(OX, OY, BOARD_W, BOARD_H);
+      ctx.clip();
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c < COLS; c++) {
           const cell = game.board[r][c];
           const [cx, cy] = this.center(c, r);
-          this.drawCell(ctx, cell, cx, cy, CELL);
+          this.drawCell(ctx, cell, cx, cy + PD.landingOffset(game, c, r, CELL), CELL);
         }
+      ctx.restore();
 
       this.drawCursor(ctx, game);
 
@@ -90,11 +95,26 @@
     }
 
     drawCursor(ctx, game) {
-      if (game.phase !== 'countdown' && game.phase !== 'flowing') return;
-      const { c, r } = game.cursor;
-      const ok = game.canPlaceAt(c, r);
+      const t = PD.cursorTarget(game);
+      if (!t) return;
+      const { c, r, ok } = t;
       const x = OX + c * CELL;
       const y = OY + r * CELL;
+      if (t.column) {
+        // bonus round: light up the whole column the piece will drop into
+        ctx.save();
+        ctx.fillStyle = ok ? C.cursor : C.cursorBad;
+        ctx.globalAlpha = 0.12;
+        ctx.fillRect(x + 2, OY + 2, CELL - 4, BOARD_H - 4);
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(x + CELL / 2 - 9, OY + 6);
+        ctx.lineTo(x + CELL / 2 + 9, OY + 6);
+        ctx.lineTo(x + CELL / 2, OY + 18);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
       if (ok) {
         // ghost of the next piece
         ctx.save();

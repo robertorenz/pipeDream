@@ -13,9 +13,9 @@
 
   const renderers = {
     flat: new PD.FlatRenderer(boardCanvas),
-    iso: new PD.IsoRenderer(boardCanvas),
+    depth: new PD.DepthRenderer(boardCanvas),
   };
-  let renderer = renderers[localStorage.getItem('pd.view') === 'iso' ? 'iso' : 'flat'];
+  let renderer = renderers[localStorage.getItem('pd.view')] || renderers.flat;
 
   /* ---------- view mode ---------- */
 
@@ -108,6 +108,11 @@
     hideModals();
     game.retryLevel();
   });
+  $('#btn-bonus-start').addEventListener('click', resumeGame);
+  $('#btn-bonus-continue').addEventListener('click', () => {
+    hideModals();
+    game.nextLevel();
+  });
   $('#btn-resume').addEventListener('click', resumeGame);
   $('#btn-quit').addEventListener('click', () => showTitle());
   $('#btn-pause').addEventListener('click', togglePause);
@@ -186,6 +191,19 @@
       $('#btn-next').textContent = next ? `Level ${next.n}` : 'Finish';
       showModal('modal-level');
     })
+    .on('bonusstart', () => {
+      game.pause();
+      showModal('modal-bonus');
+    })
+    .on('bonusover', (d) => {
+      audio.levelComplete();
+      const next = PD.LEVELS[game.levelIndex + 1];
+      $('#bonus-filled').textContent = d.filled;
+      setStat('#bonus-points', d.points, true);
+      $('#bonus-score').textContent = game.score.toLocaleString();
+      $('#btn-bonus-continue').textContent = next ? `Level ${next.n}` : 'Finish';
+      showModal('modal-bonus-over');
+    })
     .on('gameover', (d) => {
       audio.gameOver();
       $('#over-subtitle').textContent = `The flooz got loose on level ${d.level.n}.`;
@@ -223,11 +241,11 @@
 
   function updateHud() {
     if (!game.level) return;
-    hud.level.textContent = game.level.n;
+    hud.level.textContent = game.bonus ? 'Bonus' : game.level.n;
     hud.score.textContent = game.score.toLocaleString();
-    hud.distance.textContent = game.remaining;
+    hud.distance.textContent = game.bonus ? '\u2014' : game.remaining;
     hud.hiscore.textContent = game.hiscore.toLocaleString();
-    hud.distanceBox.classList.toggle('done', game.remaining === 0);
+    hud.distanceBox.classList.toggle('done', !game.bonus && game.remaining === 0);
   }
 
   function updateTimer() {
@@ -298,7 +316,7 @@
       return;
     }
     if (key === 'v' || key === 'V') {
-      setView(renderer.name === 'flat' ? 'iso' : 'flat');
+      setView(renderer.name === 'flat' ? 'depth' : 'flat');
       return;
     }
     if (key === 'h' || key === 'H') {
@@ -317,7 +335,10 @@
         game.moveCursor(0, -1);
         break;
       case 'ArrowDown':
-        game.moveCursor(0, 1);
+        if (game.bonus) {
+          audio.ensure();
+          game.place(game.cursor.c, 0);
+        } else game.moveCursor(0, 1);
         break;
       case 'Enter':
       case 'z':

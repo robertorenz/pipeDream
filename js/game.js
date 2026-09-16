@@ -31,7 +31,13 @@
     REPLACE: -50,     // replacing a piece already on the board
     UNUSED: -100,     // each unfilled piece removed at the end of a level
     END_BONUS: 1000,  // flooz reaches the end piece
+    BONUS_PIECE: 100, // each piece filled during a bonus round
   };
+
+  const BONUS_EVERY = 4;         // a falling-piece bonus round follows every 4th level
+  const BONUS_COUNTDOWN = 15;    // seconds before the flooz starts in a bonus round
+  const BONUS_FLOW_FACTOR = 1.25;
+  const LAND_MS = 160;           // how long a dropped piece takes to fall into place
 
   const FAST_MS = 170;         // flow time per piece once the player speeds up
   const RESERVOIR_FACTOR = 3;  // reservoirs take this many times longer to fill
@@ -106,6 +112,8 @@
       this.head = null;
       this.spill = null;
       this.now = 0;
+      this.bonus = false;
+      this.landings = [];
     }
 
     on(type, fn) {
@@ -127,20 +135,43 @@
       const lv = LEVELS[index];
       this.levelIndex = index;
       this.level = lv;
-      this.levelStartScore = this.score;
+      this.bonus = false;
       this.board = lv.map.map((row) => row.split('').map((ch) => (MAP_CHARS[ch] || MAP_CHARS['.'])()));
       this.start = this.findStart() || this.placeRandomStart();
       this.end = this.findEnd();
+      this.resetRound(lv.distance, lv.countdown * 1000, lv.flow * 1000);
+      this.emit('level', lv);
+    }
+
+    // The original's bonus round: an empty board, the start at the bottom
+    // pointing up, and pieces that drop into a column and stack like Tetris.
+    // No distance to reach - every filled section is worth double.
+    loadBonus() {
+      const lv = this.level;
+      this.bonus = true;
+      this.board = Array.from({ length: ROWS }, () => Array.from({ length: COLS }, () => makeCell('empty')));
+      const c = 1 + Math.floor(Math.random() * (COLS - 2));
+      this.board[ROWS - 1][c] = makeCell('start', { dir: 'N' });
+      this.start = { c, r: ROWS - 1 };
+      this.end = null;
+      this.resetRound(0, BONUS_COUNTDOWN * 1000, lv.flow * 1000 * BONUS_FLOW_FACTOR);
+      this.emit('level', lv);
+      this.emit('bonusstart');
+    }
+
+    resetRound(distance, countdownMs, flowMs) {
+      this.levelStartScore = this.score;
       this.queue = Array.from({ length: 5 }, randomPiece);
-      this.distance = lv.distance;
+      this.distance = distance;
       this.filled = 0;
-      this.countdown = lv.countdown * 1000;
-      this.countdownTotal = this.countdown;
-      this.flowTime = lv.flow * 1000;
+      this.countdown = countdownMs;
+      this.countdownTotal = countdownMs;
+      this.flowTime = flowMs;
       this.fast = false;
       this.head = null;
       this.spill = null;
       this.effects = [];
+      this.landings = [];
       this.lockUntil = 0;
       this.cleanup = null;
       this.endReason = null;
@@ -148,7 +179,6 @@
       this.unusedPenalty = 0;
       this.cursor = { c: Math.min(this.cursor.c, COLS - 1), r: Math.min(this.cursor.r, ROWS - 1) };
       this.phase = 'countdown';
-      this.emit('level', lv);
     }
 
     findStart() {
@@ -184,9 +214,19 @@
 
     /* ---------- player actions ---------- */
 
+    // Bonus rounds: the row a piece dropped into column c would land in (-1 if full).
+    landingRow(c) {
+      for (let r = ROWS - 1; r >= 0; r--) if (this.board[r][c].type === 'empty') return r;
+      return -1;
+    }
+    landingAt(c, r) {
+      return this.landings.find((l) => l.c === c && l.r === r) || null;
+    }
+
     canPlaceAt(c, r) {
       if (!inBounds(c, r)) return false;
       if (this.phase !== 'countdown' && this.phase !== 'flowing') return false;
+      if (this.bonus) return this.landingRow(c) >= 0;
       const cell = this.board[r][c];
       if (cell.type === 'empty') return true;
       if (cell.type !== 'pipe' || cell.fixed) return false;
@@ -201,11 +241,13 @@
         return false;
       }
       if (this.now < this.lockUntil) return false;
+      if (this.bonus) r = this.landingRow(c);
       const cell = this.board[r][c];
       const kind = this.queue.shift();
       this.queue.push(randomPiece());
       const replacing = cell.type === 'pipe';
       this.board[r][c] = makeCell('pipe', { kind });
+      if (this.bonus) this.landings.push({ c, r, t: 0, life: LAND_MS, rows: r + 1 });
       if (replacing) {
         this.addScore(SCORE.REPLACE, c, r);
         this.lockUntil = this.now + REPLACE_LOCK_MS;
@@ -231,7 +273,7 @@
 
     moveCursor(dc, dr) {
       this.cursor.c = (this.cursor.c + dc + COLS) % COLS;
-      this.cursor.r = (this.cursor.r + dr + ROWS) % ROWS;
+      if (!this.bonus) this.cursor.r = (this.cursor.r + dr + ROWS) % ROWS;
     }
     setCursor(c, r) {
       if (inBounds(c, r)) this.cursor = { c, r };
@@ -248,7 +290,9 @@
     }
 
     nextLevel() {
-      if (this.levelIndex + 1 < LEVELS.length) this.loadLevel(this.levelIndex + 1);
+      const more = this.levelIndex + 1 < LEVELS.length;
+      if (!this.bonus && more && this.level.n % BONUS_EVERY === 0) return this.loadBonus();
+      if (more) this.loadLevel(this.levelIndex + 1);
       else this.emit('won');
     }
     retryLevel() {
@@ -262,6 +306,8 @@
       this.now += dt;
       for (const fx of this.effects) fx.t += dt;
       this.effects = this.effects.filter((fx) => fx.t < fx.life);
+      for (const l of this.landings) l.t += dt;
+      this.landings = this.landings.filter((l) => l.t < l.life);
       if (this.spill) this.spill.t += dt;
 
       switch (this.phase) {
@@ -322,7 +368,7 @@
     onPieceFilled(cell, h) {
       if (cell.type === 'pipe') {
         this.filled++;
-        this.addScore(SCORE.PIECE, h.c, h.r);
+        this.addScore(this.bonus ? SCORE.BONUS_PIECE : SCORE.PIECE, h.c, h.r);
         if (cell.kind === 'X' && cell.fill.H && cell.fill.H.done && cell.fill.V && cell.fill.V.done) {
           this.addScore(SCORE.CROSS_BONUS, h.c, h.r, true);
           this.emit('bonus', { c: h.c, r: h.r, points: SCORE.CROSS_BONUS });
@@ -378,11 +424,12 @@
       if (reason === 'spill') this.spill = { c, r, dir, t: 0 };
       // Unused, non-fixed pipes get removed one by one with a penalty.
       const list = [];
-      for (let rr = 0; rr < ROWS; rr++)
-        for (let cc = 0; cc < COLS; cc++) {
-          const cell = this.board[rr][cc];
-          if (cell.type === 'pipe' && !cell.fixed && !fillDone(cell)) list.push({ c: cc, r: rr, penalty: !cell.preplaced });
-        }
+      if (!this.bonus)
+        for (let rr = 0; rr < ROWS; rr++)
+          for (let cc = 0; cc < COLS; cc++) {
+            const cell = this.board[rr][cc];
+            if (cell.type === 'pipe' && !cell.fixed && !fillDone(cell)) list.push({ c: cc, r: rr, penalty: !cell.preplaced });
+          }
       this.cleanup = { list, wait: SPILL_PAUSE_MS, timer: 0 };
       this.emit(reason === 'spill' ? 'spill' : 'end', { c, r, dir });
     }
@@ -407,7 +454,10 @@
       }
       if (!cu.list.length && cu.timer <= 0) {
         this.cleanup = null;
-        if (this.filled >= this.distance) {
+        if (this.bonus) {
+          this.phase = 'bonusover';
+          this.emit('bonusover', { level: this.level, filled: this.filled, points: this.score - this.levelStartScore });
+        } else if (this.filled >= this.distance) {
           this.phase = 'levelcomplete';
           this.emit('levelcomplete', { level: this.level, score: this.score, endBonus: this.endBonus, penalty: this.unusedPenalty });
         } else {

@@ -250,6 +250,7 @@ body {
 .modal-hero p { margin: 6px 0 0; color: var(--muted); }
 .hero-success { border-bottom-color: var(--flooz); }
 .hero-danger { background: linear-gradient(135deg, #3a1020 0%, var(--sa-secondary) 100%); border-bottom-color: var(--sa-highlight); }
+.hero-bonus { background: linear-gradient(135deg, #3b2606 0%, var(--sa-secondary) 100%); border-bottom-color: var(--warning); }
 
 .modal-body { padding: 20px 24px 22px; }
 .modal-body h3 { margin: 0 0 8px; font-size: 1.2rem; }
