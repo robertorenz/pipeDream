@@ -165,21 +165,48 @@
     const a = cell.anim;
     if (!a || cell.fill) return draw(cell);
     if (a.kind === 'replace' && a.t < a.breakMs) {
+      // the old piece rattles, shrinks and dissolves
       const k = a.t / a.breakMs;
-      const shake = (1 - k) * 3;
+      const shake = (1 - k) * 5;
+      const scale = 1 - 0.4 * k * k;
       ctx.save();
-      ctx.globalAlpha = 1 - k * 0.85;
-      ctx.translate(Math.sin(a.t * 0.11) * shake, Math.cos(a.t * 0.17) * shake);
+      ctx.globalAlpha = Math.max(0, 1 - k * 1.05);
+      ctx.translate(cx + Math.sin(a.t * 0.12) * shake, cy + Math.cos(a.t * 0.19) * shake);
+      ctx.scale(scale, scale);
+      ctx.translate(-cx, -cy);
       draw(a.old);
+      ctx.restore();
+      // cracks spreading over it
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, k * 1.5) * 0.9;
+      ctx.strokeStyle = '#0b0f1c';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const reach = 8 + k * 26;
+      for (let i = 0; i < 5; i++) {
+        const ang = i * 1.26 + 0.4;
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(ang) * reach, cy + Math.sin(ang) * reach * 0.8);
+        ctx.lineTo(cx + Math.cos(ang + 0.5) * reach * 1.25, cy + Math.sin(ang + 0.5) * reach);
+      }
+      ctx.stroke();
       ctx.restore();
       return;
     }
+    // the new piece drops onto the board from above
     const k = Math.min(1, (a.t - a.breakMs) / a.popMs);
     const ease = 1 - Math.pow(1 - k, 3);
-    const scale = 1.4 - 0.4 * ease;
+    const scale = 1.9 - 0.9 * ease;
     ctx.save();
-    ctx.globalAlpha = Math.min(1, 0.2 + k * 1.2);
-    ctx.translate(cx, cy);
+    ctx.globalAlpha = 0.4 * ease;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(cx + 3, cy + 8, 30 * (0.4 + 0.6 * ease), 20 * (0.4 + 0.6 * ease), 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = 0.1 + 0.9 * ease;
+    ctx.translate(cx, cy - (1 - ease) * 40);
     ctx.scale(scale, scale);
     ctx.translate(-cx, -cy);
     draw(cell);

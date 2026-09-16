@@ -28,9 +28,9 @@ game over.
 
 You can drop a piece on top of one already on the board as long as the flooz
 hasn't reached it. It costs 50 points, and — as in the original — the old piece
-breaks up for about half a second before the new one lands; nothing can be
-placed in the meantime. Freshly laid pieces pop into place rather than
-appearing instantly.
+cracks, shakes and dissolves for just under a second before the new one drops
+in; nothing can be placed in the meantime. Freshly laid pieces drop onto the
+board from above rather than appearing instantly.
 
 ### Scoring
 

@@ -41,8 +41,8 @@
 
   const FAST_MS = 170;         // flow time per piece once the player speeds up
   const RESERVOIR_FACTOR = 3;  // reservoirs take this many times longer to fill
-  const REPLACE_LOCK_MS = 450; // the old piece breaks up for this long before the new one lands
-  const PLACE_POP_MS = 150;    // a newly laid piece pops into place over this long
+  const REPLACE_LOCK_MS = 900; // the old piece breaks up for this long before the new one lands
+  const PLACE_POP_MS = 320;    // a newly laid piece drops onto the board over this long
   const SPILL_PAUSE_MS = 900;  // pause after the spill before the cleanup starts
   const CLEANUP_STEP_MS = 90;  // interval between unused pieces being removed
 
